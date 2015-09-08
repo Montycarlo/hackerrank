@@ -1,0 +1,9 @@
+awk '{                                                                                                                                            Thu Jun 11 12:48:18 AEST 2015
+                total=$2+$3+$4;
+                avg=total/3;
+                if(avg >= 80) grade="A";
+                else if(avg >= 60) grade="B";
+                else if(avg >= 50) grade="C";
+                else grade="FAIL";
+                print $1,$2,$3,$4,":",grade;
+                }' input

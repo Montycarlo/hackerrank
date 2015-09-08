@@ -1,0 +1,1 @@
+grep -i '\(^\|[^a-zA-Z]\)th\(e\|at\|en\|ose\)[^a-zA-Z]'
