@@ -1,19 +1,23 @@
 import Data.List
 
 type Crossword = [[CCell]]
-data CCell = Filled | Empty | Word Char deriving Show
+type CWord a = [a]-- [CCell]
+data WordList a = WordList Int [CWord a] deriving Show
+data Point = Point Int Int deriving Show
+data CCell = Filled | Empty Point deriving Show
 
-parseChar :: Char -> CCell
-parseChar c
-	| c == '-' = Empty
+parseChar :: (Point, Char) -> CCell
+parseChar (p, c)
+	| c == '-' = Empty p
 	| otherwise = Filled
 
 getCrosswordLine :: Int -> IO [CCell]
 getCrosswordLine n = do
 	x <- getLine
-	return $ map parseChar x
+	let ps = map (\x-> Point x n) [0..(length x)]
+	return $ map parseChar $ zip ps x
 
-getCrossword n = mapM getCrosswordLine [1..n]
+getCrossword n = mapM getCrosswordLine [0..(n-1)]
 
 printCw :: [[CCell]] -> IO()
 printCw [] = return ()
@@ -26,7 +30,7 @@ parseRow [] y = [y]
 parseRow (x:xs) y = case x of
 	Filled -> if length y > 1 then y:rest else rest
 						where rest = parseRow xs []
-	Empty -> parseRow xs (y++[x])
+	Empty _ -> parseRow xs (y++[x])
 
 -- Parse a given Crossword, and extract a list of empty consequtive
 -- cells, flip the crossword and then do the same, concat the two results
@@ -44,10 +48,21 @@ wordsWhen p s =  case dropWhile p s of
 	s' -> w : wordsWhen p s''
 				where (w, s'') = break p s'
 
-getWords :: [String]
+getWords :: IO [String]
 getWords = do
 	l <- getLine 
-	wordsWhen (==';') l
+	return $ wordsWhen (==';') l
+
+addWordToPartitions :: CWord a -> [WordList a] -> [WordList a]
+addWordToPartitions w [] = [WordList (length w) [w]]
+addWordToPartitions w (x@(WordList x_n x_wl):xs)
+	| length w == x_n = WordList x_n (w:x_wl):xs
+	| otherwise = x:addWordToPartitions w xs
+
+partitionWords :: [CWord a] -> [WordList a] -> [WordList a]
+partitionWords [] acc = acc
+partitionWords (x:xs) acc = 
+	partitionWords xs $ addWordToPartitions x acc
 
 main = do
 	cw <- getCrossword 10
@@ -58,4 +73,7 @@ main = do
 	putStrLn $ show $ length horz
 	
 	cw_words <- getWords
-	show.putStrLn cw_words
+	putStrLn $ show cw_words
+	putStrLn . show $ partitionWords cw_words []
+	putStrLn . show $ partitionWords horz []
+	putStrLn . show $ length $ partitionWords horz []
