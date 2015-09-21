@@ -46,6 +46,12 @@ intersectPowerSets ns [] = []
 intersectPowerSets ns (x:xs) = 
 		(intersectPowerSets' ns x) ++ intersectPowerSets ns xs	
 
+--cmpPrimePowers :: PrimePower -> PrimePower -> Ordering
+--cmpPrimePowers (b,_) (c,_)
+--	| b < c = LT
+--	| b == c = EQ
+--	| otherwise = GT
+
 unionPowerWith :: [PrimePower] -> PrimePower -> [PrimePower]
 unionPowerWith [] pp = [pp]
 unionPowerWith (x@(x_b,x_p):xs) pp@(pp_b,pp_p) 
@@ -58,8 +64,7 @@ unionPowerSets (x:xs) ys = unionPowerSets xs $ unionPowerWith ys x
 
 findPowerList :: [Integer] -> [PrimePower]
 findPowerList ns = 
-	let z = foldl (\x y -> unionPowerSets x y) [] $ map findPrimePowers ns in
-	trace (show z) z
+	foldl (\x y -> unionPowerSets y x) [] $ map findPrimePowers ns
 			
 
 main = do
@@ -71,7 +76,6 @@ main = do
 			b = findPowerList . map read $ words b_str;
 			com = intersectPowerSets a b;
 
-	putStrLn $ show b
 	putStrLn . show . (\x -> mod x 1000000007) . product $ map (\(x,y)->x^y) com
 			
 	
