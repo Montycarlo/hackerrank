@@ -1,35 +1,33 @@
 import Data.List
+import Debug.Trace
 
 type Hunger = (Integer,Integer)
 
 calcHunger' p (app,hap) = app + (toInteger p)*hap
 
 mapCostsForP :: Int -> [Hunger] -> [Integer]
-mapCostsForP p hs = map (calcHunger' (p-1)) hs
+mapCostsForP p hs = map (calcHunger' p) hs
 
-findSmallestHungerSum :: Int -> [Hunger] -> Integer
-findSmallestHungerSum p hs = sum . (take p) $ mapCostsForP p hs;
+findMaxPforHunger :: Integer -> Integer -> Integer -> Double
+findMaxPforHunger mangoes appt happy = (fromIntegral mangoes - fromIntegral appt) / (fromIntegral happy)
 
-findLargestSumUnderLimit' :: [Hunger] -> Integer -> (Int,Int) -> Int
-findLargestSumUnderLimit' hs max (p,n)
-	| p == n		= n
-	| s > max		= findLargestSumUnderLimit' hs max (p,p_c-1)
-	| s < max		= findLargestSumUnderLimit' hs max (p_c,n)
-	| s == max	= p_c
-	where p_c = round $ fromIntegral (p+n)/2.0;
-				s = findSmallestHungerSum p_c hs
--- | p == 0			= 0
--- | s <= max		= p
--- | otherwise = findLargestSumUnderLimit' hs max ((p-1),n)
---		where s = findSmallestHungerSum p hs
-findLargestSumUnderLimit :: [Hunger] -> Integer -> Int -> Int
-findLargestSumUnderLimit hs max n = findLargestSumUnderLimit' hs max (1,n)
+maxPhunger :: Integer -> Hunger -> (Double,Hunger)
+maxPhunger mans hung@(ap,ha) = (findMaxPforHunger mans ap ha, hung)
 
-sortHunger :: Hunger -> Hunger -> Ordering
-sortHunger (ap,happ) (ap2,happ2)
-	| happ < happ2 = LT
-	| happ == happ2 = compare ap ap2
-	| otherwise = GT
+sortHunger :: (Double,Hunger) -> (Double,Hunger) -> Ordering
+sortHunger (x,_) (y,_) = compare x y
+
+sumOfHunger :: Int -> [Hunger] -> Integer
+sumOfHunger p hungers = sum $ mapCostsForP p hungers
+
+countUntilOver _ n [] _ = n
+countUntilOver mang n ((max,hung):xs) acc
+	| s > mang = n
+	| s == mang = n+1
+	| otherwise = countUntilOver mang (n+1) xs (hung:acc)
+	where s = sumOfHunger n (hung:acc)
+
+
 
 main = do
 	nm <- getLine
@@ -41,5 +39,7 @@ main = do
 			m = read m_s::Integer;
 			apps = mapInt app_str;
 			haps = mapInt hap_str;
-			hungers = sortBy sortHunger $ zip apps haps
-	putStrLn . show $ findLargestSumUnderLimit hungers m n
+			hungers = reverse . sortBy sortHunger $ map (maxPhunger m) $ zip apps haps
+
+	--putStrLn . show $ hungers
+	putStrLn . show $ countUntilOver m 0 hungers []
