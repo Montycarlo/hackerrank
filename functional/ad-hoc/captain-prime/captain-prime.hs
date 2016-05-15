@@ -1,12 +1,32 @@
+import qualified Data.Set as PQ
 
-primes' prev n
-	| all (\x->rem n x /= 0) prev = n:primes' (n:prev) (n+2)
-	| otherwise = primes' prev (n+1)
-primes = 1:2:primes' [2] 3
+-- Credits for Primes fN
+--	 Melissa E. O'Neill 
+--	 Garrison Jensen
+-- Please see this
+-- http://www.garrisonjensen.com/2015/05/13/haskell-programs-are-lies.html
+primes :: [Integer]
+primes = 2:sieve [3,5..]
+  where
+    sieve (x:xs) = x : sieve' xs (insertprime x xs PQ.empty)
+
+    sieve' (x:xs) table
+        | nextComposite == x = sieve' xs (adjust x table)
+        | otherwise          = x : sieve' xs (insertprime x xs table)
+      where 
+        (nextComposite,_) = PQ.findMin table
+
+    adjust x table
+        | n == x    = adjust x (PQ.insert (n', ns) newPQ)
+        | otherwise = table
+      where
+        Just ((n, n':ns), newPQ) = PQ.minView table
+
+    insertprime p xs = PQ.insert (p*p, map (*p) xs)
 
 isPrime' n (x:xs)
 	| n == x = True
-	| x > n = False
+	| n < x = False
 	| otherwise = isPrime' n xs
 isPrime n = isPrime' n primes
 
@@ -20,13 +40,15 @@ lefts xs = (lefts $ tail xs) ++ [xs]
 
 getArea id
 	| containsZero id = "DEAD"
+	| not prime			  = "DEAD"
 	| isCentral				= "CENTRAL"
 	| leftsPrime			= "LEFT"
 	| rightsPrime			= "RIGHT"
 	| otherwise				= "DEAD"
-	where leftsPrime = all (isPrime.read) $ lefts id;
-				rightsPrime = all (isPrime.read) $ rights id;
-				isCentral = leftsPrime && rightsPrime
+	where prime = isPrime $ read id;
+				leftsPrime = all (isPrime.read) $ init $ lefts id;
+				rightsPrime = all (isPrime.read) $ init $ rights id;
+				isCentral = leftsPrime && rightsPrime && prime
 
 doCase n = do
 	id <- getLine
